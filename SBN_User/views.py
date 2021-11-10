@@ -98,6 +98,26 @@ class SBN_User_API_POST_Register_Create_User(APIView):
                 error
             )
         
+@method_decorator(csrf_protect, name="dispatch")
+# login the user.
+class SBN_User_API_POST_Login(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        de_bundle = auth.verify_id_token(request.COOKIES.get("sbn-session-id"))
+        bundle = {}
+        bundle["uid"] = de_bundle["uid"]
+        bundle["email"] = de_bundle["email"]
+        bundle["password"] = request.data["password"]
+        bundle["exp"] = de_bundle["exp"]
+        try: 
+            if UserInfo.objects.filter(uid=bundle["uid"]).exists() and UserAuth.objects.filter(password=bundle["password"]).exists():
+                token = generate_jwt(bundle)
+                username = UserInfo.objects.get(email=bundle["email"]).username
+                return handcraft_res(202, { "success": "Welcome back {}".format(username), "token": "{}".format(token) })
+        except Exception as error:
+            return handcraft_res(401, error)
+
 
 
 @method_decorator(csrf_protect, name="dispatch")
