@@ -58,60 +58,46 @@ class SBN_User_API_POST_Register_Create_User(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        de_bundle = auth.verify_id_token(
+            request.COOKIES.get("sbn-session-id"))
+        bundle = {}
+        bundle["uid"] = de_bundle["uid"]
+        bundle["username"] = request.data["username"]
+        bundle["email"] = de_bundle["email"]
+        bundle["password"] = request.data["password"]
+        bundle["platform"] = de_bundle["firebase"]["sign_in_provider"]
+        bundle["exp"] = de_bundle["exp"]
         try:
-            # Verify the firebase token.
-            de_bundle = auth.verify_id_token(
-                request.COOKIES.get("sbn-session-id"))
-            # Store into a persistent instance.
-            bundle = {}
-            bundle["uid"] = de_bundle["uid"]
-            if "username" in request.data:
-                bundle["username"] = request.data["username"]
-            bundle["email"] = de_bundle["email"]
-            if "password" in request.data:
-                bundle["password"] = request.data["password"]
-            bundle["platform"] = de_bundle["firebase"]["sign_in_provider"]
-            bundle["exp"] = de_bundle["exp"]
-            try:
-                get_platform, package = register_package(bundle)
-                platform = UserPlatform.objects.get(pk=get_platform)
-                UserInfo(
-                    uid=package["uid"],
+            get_platform, package = register_package(bundle)
+            platform = UserPlatform.objects.get(pk=get_platform)
+            UserInfo(
+                uid=package["uid"],
+                username=package["username"],
+                email=package["email"],
+                platform=platform,
+            ).save()
+            if get_platform == 1:
+                uid = UserInfo.objects.get(
+                    uid=package["uid"]
+                )
+                UserAuth(
+                    uid=uid,
                     username=package["username"],
                     email=package["email"],
-                    platform=platform,
+                    password=package["password"],
                 ).save()
-                if get_platform == 1:
-                    uid = UserInfo.objects.get(
-                        uid=package["uid"]
-                    )
-                    UserAuth(
-                        uid=uid,
-                        username=package["username"],
-                        email=package["email"],
-                        password=package["password"],
-                    ).save()
-                return Response(data={"accessToken": generate_jwt(package)}, status=201)
-            except Exception as error:
-                if "UNIQUE" in error:
-                    return handcraft_res(
-                        400,
-                        error
-                    )
-                else:
-                    if UserInfo.objects.filter(uid=package["uid"]).exists():
-                        UserInfo.objects.filter(uid=package["uid"]).delete()
-                    if UserAuth.objects.filter(uid=package["uid"]).exists():
-                        UserAuth.objects.filter(uid=package["uid"]).exists()
-                    return handcraft_res(
-                        400,
-                        error
-                    )
+            token = generate_jwt(package)
+            return handcraft_res(201, {"success": "{} has been created!".format(package["username"]), "token": "{}".format(token)})
         except Exception as error:
+            if UserInfo.objects.filter(uid=package["uid"]).exists():
+                UserInfo.objects.filter(uid=package["uid"]).delete()
+            if UserAuth.objects.filter(uid=package["uid"]).exists():
+                UserAuth.objects.filter(uid=package["uid"]).exists()
             return handcraft_res(
-                401,
+                400,
                 error
             )
+        
 
 
 @method_decorator(csrf_protect, name="dispatch")
