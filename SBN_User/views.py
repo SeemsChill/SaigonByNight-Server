@@ -60,13 +60,18 @@ class SBN_User_API_POST_Register_Create_User(APIView):
     def post(self, request, *args, **kwargs):
         de_bundle = auth.verify_id_token(
             request.COOKIES.get("sbn-session-id"))
+        print(de_bundle)
         bundle = {}
         bundle["uid"] = de_bundle["uid"]
-        bundle["username"] = request.data["username"]
         bundle["email"] = de_bundle["email"]
-        bundle["password"] = request.data["password"]
         bundle["platform"] = de_bundle["firebase"]["sign_in_provider"]
+        if bundle["platform"] == "password":
+            bundle["username"] = request.data["username"]
+            bundle["password"] = request.data["password"]
+        if bundle["platform"] == "google.com":
+            bundle["username"] = de_bundle["name"]
         bundle["exp"] = de_bundle["exp"]
+        print(bundle)
         try:
             get_platform, package = register_package(bundle)
             platform = UserPlatform.objects.get(pk=get_platform)

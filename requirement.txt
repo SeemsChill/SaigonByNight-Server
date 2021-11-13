@@ -1,5 +1,7 @@
-Pillow==8.3.2
-djangorestframework==3.12.4  
-django-cors-headers==3.8.0
-django-phonenumber-field[phonenumbers]==5.2.1.dev7+g2fa60ad
-djangorestframework-simplejwt==4.8.0.post2+g0e98508
+Pillow
+django
+djangorestframework
+django-cors-headers
+django-phonenumber-field[phonenumbers]
+djangorestframework-simplejwt
+firebase-admin
