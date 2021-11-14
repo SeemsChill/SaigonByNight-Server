@@ -59,10 +59,10 @@ class ImageBackgroundPath(object):
 class UserPlatform(models.Model):  # User's Platform Table.
     platform = models.CharField(
         # Attributes.
-        max_length=8,
+        max_length=20,
         # Details.
         verbose_name="user_category.",
-        help_text="Following format: char(1 -> 8).",
+        help_text="Following format: char(1 -> 20).",
     )
 
     class Meta:

@@ -65,11 +65,9 @@ class SBN_User_API_POST_Register_Create_User(APIView):
         bundle["uid"] = de_bundle["uid"]
         bundle["email"] = de_bundle["email"]
         bundle["platform"] = de_bundle["firebase"]["sign_in_provider"]
+        bundle["username"] = request.data["username"]
         if bundle["platform"] == "password":
-            bundle["username"] = request.data["username"]
             bundle["password"] = request.data["password"]
-        if bundle["platform"] == "google.com":
-            bundle["username"] = de_bundle["name"]
         bundle["exp"] = de_bundle["exp"]
         print(bundle)
         try:

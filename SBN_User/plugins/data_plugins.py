@@ -1,5 +1,5 @@
 def register_package(data):
-    platforms = {"facebook": 2, "github": 3}
+    platforms = {"google.com": 2, "github.com": 3}
 
     keys = ["full_name", "first_dest",
                          "second_dest", "third_dest", "detail_adr", "phone_number"]
