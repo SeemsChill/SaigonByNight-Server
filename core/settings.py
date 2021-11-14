@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-9dcc8qm&blgh50xs=nc9)&!-q!$-e6qnrsm6vjburxz97)kq6l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False 
 
-ALLOWED_HOSTS = ['saigon-by-night-server.herokuapp.com', '127.0.0.1']
+ALLOWED_HOSTS = ['saigon-by-night-server.herokuapp.com', '127.0.0.1', "saigon-by-night.vercel.app"]
 # ALLOWED_HOSTS = []
 # Application definition
 
@@ -152,8 +152,9 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "saigon-by-night.vercel.app"
+    "https://saigon-by-night.vercel.app"
 ]
+
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
