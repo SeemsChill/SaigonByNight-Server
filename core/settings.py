@@ -143,19 +143,16 @@ SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SECURE = True
 
+CSRF_COOKIE_DOMAIN="saigon-by-night-server.herokuapp.com"
 CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    "https://saigon-by-night.vercel.app"
+    "saigon-by-night.vercel.app"
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    "https://saigon-by-night.vercel.app"
+    "saigon-by-night.vercel.app"
 ]
 CORS_ALLOW_METHODS = [
     "DELETE",
