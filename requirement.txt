@@ -1,7 +1,0 @@
-Pillow
-django
-djangorestframework
-django-cors-headers
-django-phonenumber-field[phonenumbers]
-djangorestframework-simplejwt
-firebase-admin
