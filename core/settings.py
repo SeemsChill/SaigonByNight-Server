@@ -149,13 +149,13 @@ CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    "https://saigon-by-night-omvirnen6-synthchill.vercel.app"
+    "https://saigon-by-night-uxs6ciq4y-synthchill.vercel.app"
 ]
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    "https://saigon-by-night-omvirnen6-synthchill.vercel.app"
+    "https://saigon-by-night-uxs6ciq4y-synthchill.vercel.app"
 ]
 CORS_ALLOW_METHODS = [
     "DELETE",
