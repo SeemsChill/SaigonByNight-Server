@@ -1,11 +1,5 @@
-# Import AUTh modules.
-from django.http import response
-from django.utils.decorators import method_decorator
-from django.middleware.csrf import get_token
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
 # Import REST framework.
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 # Import models.
 from .models import UserAuth, UserInfo, UserPlatform
@@ -23,19 +17,19 @@ from SBN_Auth.plugins.auth_plugins import generate_jwt, verify_jwt, verify_pseud
 root_dir = os.path.dirname(__file__)
 app_dir = os.path.join(root_dir, "Firebase")
 key_file = os.path.join(app_dir, "firebase-key.json")
-
 app = credentials.Certificate(key_file)
 initialize_app(app)
 
 # Create your views here.
 
+
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return
 
+
 class SBN_User_API_POST_Register_Create_User(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
-
     def post(self, request, *args, **kwargs):
         de_bundle = auth.verify_id_token(request.data["sbnSessionId"])
         bundle = {}
@@ -46,7 +40,6 @@ class SBN_User_API_POST_Register_Create_User(APIView):
         if bundle["platform"] == "password":
             bundle["password"] = request.data["password"]
         bundle["exp"] = de_bundle["exp"]
-        print(bundle)
         if verify_pseudo_csrf(request.data["csrf"]) == True:
             try:
                 get_platform, package = register_package(bundle)
@@ -71,20 +64,17 @@ class SBN_User_API_POST_Register_Create_User(APIView):
                 token = generate_jwt(package)
                 return handcraft_res(201, {"success": "{} has been created!".format(package["username"]), "token": "{}".format(token)})
             except Exception as error:
-                print(error)
-                return handcraft_res(
-                    400,
-                    error
-                )
+                return handcraft_res(400, error)
         else:
             auth.delete_user(bundle["uid"])
             return handcraft_res(401, "Invalid csrf token!")
 
                
 class SBN_User_API_POST_Login(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def post(self, request, *args, **kwargs):
-        if verify_pseudo_csrf(request.COOKIES.get("csrftoken")) == True:
-            de_bundle = auth.verify_id_token(request.COOKIES.get("sbn-session-id"))
+        if verify_pseudo_csrf(request.data["csrf"]) == True:
+            de_bundle = auth.verify_id_token(request.data["sbnSessionId"])
             bundle = {}
             bundle["uid"] = de_bundle["uid"]
             bundle["email"] = de_bundle["email"]
@@ -97,61 +87,47 @@ class SBN_User_API_POST_Login(APIView):
                     return handcraft_res(202, { "success": "Welcome back {}".format(username), "token": "{}".format(token) })
             except Exception as error:
                 return handcraft_res(401, error)
+        else:
+            return handcraft_res(401, "Invalid csrf token!")
 
 
-
-@method_decorator(csrf_protect, name="dispatch")
-# update the user's info after registering.
 class SBN_User_API_POST_Register_Update_User(APIView):
-    permission_classes = [AllowAny]
-
     def post(self, request, *args, **kwargs):
-        try:
-            de_bundle = verify_jwt(request.headers["Authorization"])
-            if UserAuth.objects.filter(uid=de_bundle["uid"]).exists():
-                type = register_package(request.data)
-                if type == False:
+        de_bundle = verify_jwt(request.headers["Authorization"])
+        if UserAuth.objects.filter(uid=de_bundle["uid"]).exists():
+            type = register_package(request.data)
+            if type == False:
+                return handcraft_res(406, "There's something wrong with your request package!")
+            else:
+                try:
+                    if UserInfo.objects.filter(uid=de_bundle["uid"]).exists():
+                        UserInfo.objects.filter(uid=de_bundle["uid"]).update(
+                            full_name=request.data["full_name"],
+                            first_dest=request.data["first_dest"],
+                            second_dest=request.data["second_dest"],
+                            third_dest=request.data["third_dest"],
+                            detail_adr=request.data["detail_adr"],
+                            phone_number=request.data["phone_number"],
+                        )
+                    if UserAuth.objects.filter(uid=de_bundle["uid"]).exists():
+                        UserAuth.objects.filter(uid=de_bundle["uid"]).update(is_updated=True)
                     return handcraft_res(
-                        406,
-                        "There's something wrong with your request package!"
+                        202,
+                        "Update {}".format(de_bundle["uid"])
                     )
-                else:
-                    try:
-                        if UserInfo.objects.filter(uid=de_bundle["uid"]).exists():
-                            UserInfo.objects.filter(uid=de_bundle["uid"]).update(
-                                full_name=request.data["full_name"],
-                                first_dest=request.data["first_dest"],
-                                second_dest=request.data["second_dest"],
-                                third_dest=request.data["third_dest"],
-                                detail_adr=request.data["detail_adr"],
-                                phone_number=request.data["phone_number"],
-                            )
-                        if UserAuth.objects.filter(uid=de_bundle["uid"]).exists():
-                            UserAuth.objects.filter(uid=de_bundle["uid"]).update(is_updated=True)
-                        return handcraft_res(
-                            202,
-                            "Update {}".format(de_bundle["uid"])
-                        )
-                    except Exception as error:
-                        return handcraft_res(
-                            401,
-                            error
-                        )
-        except Exception as error:
-            return handcraft_res(
-                401,
-                error
-            )
+                except Exception as error:
+                    return handcraft_res(
+                        401,
+                        error
+                    )
+
 
 
 # Ideal: The next ideal about delete api.
 # - When the user click on delete account button.
 # the browser shows a form which request the user
 # to enter the password. If password matches, delete the account.
-@method_decorator(csrf_protect, name="dispatch")
 class SBN_User_API_DELETE_Specific_User(APIView):
-    permission_classes = [AllowAny]
-
     def delete(self, request, *args, **kwargs):
         try:
             de_bundle = verify_jwt(request.headers["Authorization"])
