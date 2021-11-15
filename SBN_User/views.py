@@ -37,6 +37,11 @@ class SBN_User_API_POST_Register_Create_User(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def post(self, request, *args, **kwargs):
+        print(request)
+        print(request.COOKIES)
+        print(request.data)
+        return handcraft_res(200, "Go")
+        """
         de_bundle = auth.verify_id_token(
             request.COOKIES.get("sbn-session-id"))
         bundle = {}
@@ -82,6 +87,7 @@ class SBN_User_API_POST_Register_Create_User(APIView):
         else:
             auth.delete_user(bundle["uid"])
             return handcraft_res(401, "Invalid csrf token!")
+        """
 
                
 class SBN_User_API_POST_Login(APIView):
