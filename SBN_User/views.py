@@ -37,6 +37,7 @@ class SBN_User_API_POST_Register_Create_User(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def post(self, request, *args, **kwargs):
+        print(request.COOKIES)
         de_bundle = auth.verify_id_token(
             request.COOKIES.get("sbn-session-id"))
         bundle = {}
