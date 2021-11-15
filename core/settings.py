@@ -164,7 +164,7 @@ CORS_ALLOW_METHODS = [
 
 CORS_EXPOSE_HEADERS = [
     "Content-Type",
-    "X-CSRFToken"
+    "X-Csrftoken"
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
