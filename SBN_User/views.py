@@ -4,9 +4,9 @@ from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 # Import REST framework.
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
-from rest_framework.response import Response
 # Import models.
 from .models import UserAuth, UserInfo, UserPlatform
 # Import plugins.
@@ -17,7 +17,7 @@ import os
 # Import Firebase.
 from firebase_admin import auth, credentials, initialize_app
 # Import modules from other app.
-from SBN_Auth.plugins.auth_plugins import generate_jwt, verify_jwt
+from SBN_Auth.plugins.auth_plugins import generate_jwt, verify_jwt, verify_pseudo_csrf
 
 # Get the file path.
 root_dir = os.path.dirname(__file__)
@@ -29,38 +29,16 @@ initialize_app(app)
 
 # Create your views here.
 
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return
 
-@method_decorator(csrf_exempt, name='dispatch')
-class SBN_User_API_GET_Routes(APIView):  # get dashboard api middleware.
-    permission_classes = [AllowAny]
-
-    def get(self, *args, **kwargs):
-        try:
-            api_routes = {
-                "Register (create)": "api/post/register/create/user/",
-                "Register (update)": "api/post/register/update/user/",
-                "Delete": "api/delete/user/"
-            }
-            return handcraft_res(
-                200,
-                api_routes
-            )
-        except Exception as error:
-            return handcraft_res(
-                400,
-                error
-            )
-
-
-@method_decorator(csrf_protect, name="dispatch")
-# post register/create user.
 class SBN_User_API_POST_Register_Create_User(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def post(self, request, *args, **kwargs):
         de_bundle = auth.verify_id_token(
             request.COOKIES.get("sbn-session-id"))
-        print(de_bundle)
         bundle = {}
         bundle["uid"] = de_bundle["uid"]
         bundle["email"] = de_bundle["email"]
@@ -69,57 +47,58 @@ class SBN_User_API_POST_Register_Create_User(APIView):
         if bundle["platform"] == "password":
             bundle["password"] = request.data["password"]
         bundle["exp"] = de_bundle["exp"]
-        print(bundle)
-        try:
-            get_platform, package = register_package(bundle)
-            platform = UserPlatform.objects.get(pk=get_platform)
-            UserInfo(
-                uid=package["uid"],
-                username=package["username"],
-                email=package["email"],
-                platform=platform,
-            ).save()
-            if get_platform == 1:
-                uid = UserInfo.objects.get(
-                    uid=package["uid"]
-                )
-                UserAuth(
-                    uid=uid,
+        if verify_pseudo_csrf(request.COOKIES.get("csrftoken")) == True:
+            try:
+                get_platform, package = register_package(bundle)
+                platform = UserPlatform.objects.get(pk=get_platform)
+                UserInfo(
+                    uid=package["uid"],
                     username=package["username"],
                     email=package["email"],
-                    password=package["password"],
+                    platform=platform,
                 ).save()
-            token = generate_jwt(package)
-            return handcraft_res(201, {"success": "{} has been created!".format(package["username"]), "token": "{}".format(token)})
-        except Exception as error:
-            if UserInfo.objects.filter(uid=package["uid"]).exists():
-                UserInfo.objects.filter(uid=package["uid"]).delete()
-            if UserAuth.objects.filter(uid=package["uid"]).exists():
-                UserAuth.objects.filter(uid=package["uid"]).exists()
-            return handcraft_res(
-                400,
-                error
-            )
-        
-@method_decorator(csrf_protect, name="dispatch")
-# login the user.
-class SBN_User_API_POST_Login(APIView):
-    permission_classes = [AllowAny]
+                if get_platform == 1:
+                    uid = UserInfo.objects.get(
+                        uid=package["uid"]
+                    )
+                    UserAuth(
+                        uid=uid,
+                        username=package["username"],
+                        email=package["email"],
+                        password=package["password"],
+                    ).save()
+                token = generate_jwt(package)
+                return handcraft_res(201, {"success": "{} has been created!".format(package["username"]), "token": "{}".format(token)})
+            except Exception as error:
+                if UserInfo.objects.filter(uid=package["uid"]).exists():
+                    UserInfo.objects.filter(uid=package["uid"]).delete()
+                if UserAuth.objects.filter(uid=package["uid"]).exists():
+                    UserAuth.objects.filter(uid=package["uid"]).exists()
+                return handcraft_res(
+                    400,
+                    error
+                )
+        else:
+            auth.delete_user(bundle["uid"])
+            return handcraft_res(401, "Invalid csrf token!")
 
+               
+class SBN_User_API_POST_Login(APIView):
     def post(self, request, *args, **kwargs):
-        de_bundle = auth.verify_id_token(request.COOKIES.get("sbn-session-id"))
-        bundle = {}
-        bundle["uid"] = de_bundle["uid"]
-        bundle["email"] = de_bundle["email"]
-        bundle["password"] = request.data["password"]
-        bundle["exp"] = de_bundle["exp"]
-        try: 
-            if UserInfo.objects.filter(uid=bundle["uid"]).exists() and UserAuth.objects.filter(password=bundle["password"]).exists():
-                token = generate_jwt(bundle)
-                username = UserInfo.objects.get(email=bundle["email"]).username
-                return handcraft_res(202, { "success": "Welcome back {}".format(username), "token": "{}".format(token) })
-        except Exception as error:
-            return handcraft_res(401, error)
+        if verify_pseudo_csrf(request.COOKIES.get("csrftoken")) == True:
+            de_bundle = auth.verify_id_token(request.COOKIES.get("sbn-session-id"))
+            bundle = {}
+            bundle["uid"] = de_bundle["uid"]
+            bundle["email"] = de_bundle["email"]
+            bundle["password"] = request.data["password"]
+            bundle["exp"] = de_bundle["exp"]
+            try: 
+                if UserInfo.objects.filter(uid=bundle["uid"]).exists() and UserAuth.objects.filter(password=bundle["password"]).exists():
+                    token = generate_jwt(bundle)
+                    username = UserInfo.objects.get(email=bundle["email"]).username
+                    return handcraft_res(202, { "success": "Welcome back {}".format(username), "token": "{}".format(token) })
+            except Exception as error:
+                return handcraft_res(401, error)
 
 
 
@@ -130,9 +109,7 @@ class SBN_User_API_POST_Register_Update_User(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            # Verify jwt-token.
             de_bundle = verify_jwt(request.headers["Authorization"])
-            # Process updating.
             if UserAuth.objects.filter(uid=de_bundle["uid"]).exists():
                 type = register_package(request.data)
                 if type == False:

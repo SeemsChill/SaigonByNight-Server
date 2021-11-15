@@ -24,10 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-9dcc8qm&blgh50xs=nc9)&!-q!$-e6qnrsm6vjburxz97)kq6l'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False 
+DEBUG = True 
 
-ALLOWED_HOSTS = ["*"]
-# ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,11 +46,11 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -110,6 +110,11 @@ REST_FRAMEWORK = {
     )
 }
 
+DEFAULT_AUTHENTICATION_CLASSES = [
+    'rest_framework.authentication.SessionAuthentication',
+    'rest_framework.authentication.BasicAuthentication'
+]
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
@@ -125,7 +130,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/dev/howto/static-files/
 
-STATIC_ROOT = os.path.join(BASE_DIR, "mediafiles") 
+# STATIC_ROOT = os.path.join(BASE_DIR, "mediafiles") 
 STATIC_URL = 'static/'
 
 # Default primary key field type
@@ -142,16 +147,17 @@ SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SECURE = True
 
-CSRF_COOKIE_DOMAIN = 'https://saigon-by-night-server.herokuapp.com'
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SECURE = True
-CSRF_TRUSTED_ORIGINS = [
-    "saigon-by-night.vercel.app",
-    "https://saigon-by-night.vercel.app"
-]
+#CSRF_COOKIE_SAMESITE = 'None'
+#CSRF_COOKIE_HTTPONLY = False
+#CSRF_COOKIE_SECURE = True
+# CSRF_TRUSTED_ORIGINS = [
+#    "saigon-by-night.vercel.app",
+#    "https://saigon-by-night.vercel.app"
+#]
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "https://saigon-by-night.vercel.app"
 ]
 
@@ -163,7 +169,7 @@ CORS_ALLOW_METHODS = [
 
 CORS_EXPOSE_HEADERS = [
     "Content-Type",
-    "X-Csrftoken"
+    "X-CSRFToken"
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
