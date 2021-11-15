@@ -38,7 +38,7 @@ class SBN_User_API_POST_Register_Create_User(APIView):
 
     def post(self, request, *args, **kwargs):
         print("go here!")
-        print(request.data)
+        print(request.data["sbnSessionId"])
         """
         de_bundle = auth.verify_id_token(
             request.data("sbnSessionId"))
