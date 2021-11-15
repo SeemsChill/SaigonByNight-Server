@@ -51,6 +51,7 @@ class SBN_User_API_POST_Register_Create_User(APIView):
             try:
                 get_platform, package = register_package(bundle)
                 platform = UserPlatform.objects.get(pk=get_platform)
+                print("Go here 0")
                 UserInfo(
                     uid=package["uid"],
                     username=package["username"],
@@ -70,10 +71,7 @@ class SBN_User_API_POST_Register_Create_User(APIView):
                 token = generate_jwt(package)
                 return handcraft_res(201, {"success": "{} has been created!".format(package["username"]), "token": "{}".format(token)})
             except Exception as error:
-                if UserInfo.objects.filter(uid=package["uid"]).exists():
-                    UserInfo.objects.filter(uid=package["uid"]).delete()
-                if UserAuth.objects.filter(uid=package["uid"]).exists():
-                    UserAuth.objects.filter(uid=package["uid"]).exists()
+                print(error)
                 return handcraft_res(
                     400,
                     error
