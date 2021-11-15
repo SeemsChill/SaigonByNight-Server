@@ -38,7 +38,8 @@ class SBN_User_API_POST_Register_Create_User(APIView):
 
     def post(self, request, *args, **kwargs):
         print("go here!")
-        print(request.data("sbnSessionId"))
+        print(request.data)
+        """
         de_bundle = auth.verify_id_token(
             request.data("sbnSessionId"))
         bundle = {}
@@ -50,6 +51,7 @@ class SBN_User_API_POST_Register_Create_User(APIView):
             bundle["password"] = request.data["password"]
         bundle["exp"] = de_bundle["exp"]
         print(bundle)
+        """
         print("Here")
         return handcraft_res(200, "Go!")
         """
