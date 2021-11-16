@@ -1,3 +1,5 @@
+# Import built-in django.
+from django.core.mail import send_mail
 # Import REST framework.
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.views import APIView
@@ -11,7 +13,7 @@ import os
 # Import Firebase.
 from firebase_admin import auth, credentials, initialize_app
 # Import modules from other app.
-from SBN_Auth.plugins.auth_plugins import generate_jwt, verify_jwt, verify_pseudo_csrf
+from SBN_Auth.plugins.auth_plugins import generate_jwt, generate_pseudo_email_verification_reset, verify_jwt, verify_pseudo_csrf, verify_pseudo_email_verification
 
 # Get the file path.
 root_dir = os.path.dirname(__file__)
@@ -40,6 +42,14 @@ class SBN_User_API_POST_Register_Create_User(APIView):
         if bundle["platform"] == "password":
             bundle["password"] = request.data["password"]
         bundle["exp"] = de_bundle["exp"]
+        if bundle["platform"] == "google.com":
+            if UserInfo.objects.filter(uid=de_bundle["uid"]).exists():
+                token = generate_jwt(bundle)
+                return handcraft_res(201, {"success": "Welcome back!", "token": "{}".format(token)})
+        if bundle["platform"] == "github.com":
+            if UserInfo.objects.filter(uid=de_bundle["uid"]).exists():
+                token = generate_jwt(bundle)
+                return handcraft_res(201, {"success": "Welcome back!", "token": "{}".format(token)})
         if verify_pseudo_csrf(request.data["csrf"]) == True:
             try:
                 get_platform, package = register_package(bundle)
@@ -122,6 +132,31 @@ class SBN_User_API_POST_Register_Update_User(APIView):
                     )
 
 
+class SBN_User_API_POST_Forgot(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def post(self, request, *args, **kwargs):
+        if verify_pseudo_csrf(request.data["csrf"]) == True:
+            if UserInfo.objects.filter(email=request.data["email"]).exists():
+                    credential = UserInfo.objects.get(email=request.data["email"]).platform
+                    if str(credential) == "password":
+                        token = generate_pseudo_email_verification_reset()
+                        send_mail('Reset email', 'http://localhost:3000/verify/{}'.format(token), 'quangkhatran1508@outlook.com.vn', ['apolloquang@gmail.com'], fail_silently=False)
+                        return handcraft_res(201, "Email has been sent to check verification.")
+                    else:
+                        return handcraft_res(202, "Invalid credential.")
+            return handcraft_res(404, "User not found!")
+        else:
+            return handcraft_res(401, "Invalid csrf token.")
+
+class SBN_User_API_POST_Verification(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def post(self, request, *args, **kwargs):
+        if verify_pseudo_csrf(request.data["csrf"]) == True:
+            print(request.data["code"])
+            # verify_pseudo_email_verification(request.data["code"])
+            return handcraft_res(201, "Received.") 
+        else:
+            return handcraft_res(401, "Invalid csrf token.")
 
 # Ideal: The next ideal about delete api.
 # - When the user click on delete account button.

@@ -132,6 +132,13 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, "mediafiles")
 STATIC_URL = 'static/'
 
+# setting SMTP configuration.
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_HOST_USER = "apikey"
+EMAIL_HOST_PASSWORD = "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" 
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/dev/ref/settings/#default-auto-field
 
