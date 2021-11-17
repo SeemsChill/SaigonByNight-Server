@@ -11,10 +11,19 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 """
 
 import os
+import environ
 from pathlib import Path
+
+env = environ.Env(
+    # set casting, default value.
+    DEBUG=(bool, False)
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Take environment variables from .env file.
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -24,7 +33,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-9dcc8qm&blgh50xs=nc9)&!-q!$-e6qnrsm6vjburxz97)kq6l'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False 
+DEBUG = True 
 
 ALLOWED_HOSTS = ["*"]
 # Application definition
@@ -45,7 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -133,11 +142,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, "mediafiles")
 STATIC_URL = 'static/'
 
 # setting SMTP configuration.
-EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_HOST_USER = "apikey"
-EMAIL_HOST_PASSWORD = "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" 
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_HOST = env("EMAIL_HOST") 
+EMAIL_HOST_USER = env("EMAIL_HOST_USER") 
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/dev/ref/settings/#default-auto-field

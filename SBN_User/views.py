@@ -10,12 +10,13 @@ from .plugins.data_plugins import register_package
 from .plugins.response_plugin import handcraft_res
 # Import system.
 import os
+import environ
 # Import Firebase.
 from firebase_admin import auth, credentials, initialize_app
 # Import modules from other app.
 from SBN_Auth.plugins.auth_plugins import generate_jwt, generate_pseudo_email_verification_reset, verify_jwt, verify_pseudo_csrf, verify_pseudo_email_verification
 
-# Get the file path.
+Get the file path.
 root_dir = os.path.dirname(__file__)
 app_dir = os.path.join(root_dir, "Firebase")
 key_file = os.path.join(app_dir, "firebase-key.json")
@@ -33,73 +34,97 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 class SBN_User_API_POST_Register_Create_User(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def post(self, request, *args, **kwargs):
-        de_bundle = auth.verify_id_token(request.data["sbnSessionId"])
-        bundle = {}
-        bundle["uid"] = de_bundle["uid"]
-        bundle["email"] = de_bundle["email"]
-        bundle["platform"] = de_bundle["firebase"]["sign_in_provider"]
-        bundle["username"] = request.data["username"]
-        if bundle["platform"] == "password":
+        try:
+            de_bundle = auth.verify_id_token(request.data["sbnSessionId"])
+            bundle = {}
+            bundle["uid"] = de_bundle["uid"]
+            bundle["email"] = de_bundle["email"]
+            bundle["platform"] = de_bundle["firebase"]["sign_in_provider"]
+            bundle["username"] = request.data["username"]
             bundle["password"] = request.data["password"]
-        bundle["exp"] = de_bundle["exp"]
-        if bundle["platform"] == "google.com":
-            if UserInfo.objects.filter(uid=de_bundle["uid"]).exists():
-                token = generate_jwt(bundle)
-                return handcraft_res(201, {"success": "Welcome back!", "token": "{}".format(token)})
-        if bundle["platform"] == "github.com":
-            if UserInfo.objects.filter(uid=de_bundle["uid"]).exists():
-                token = generate_jwt(bundle)
-                return handcraft_res(201, {"success": "Welcome back!", "token": "{}".format(token)})
-        if verify_pseudo_csrf(request.data["csrf"]) == True:
-            try:
-                get_platform, package = register_package(bundle)
-                platform = UserPlatform.objects.get(pk=get_platform)
-                print("Go here 0")
+            bundle["exp"] = de_bundle["exp"]
+            if verify_pseudo_csrf(request.data["csrf"]) == True:
+                platform = UserPlatform.objects.get(pk=1)
                 UserInfo(
-                    uid=package["uid"],
-                    username=package["username"],
-                    email=package["email"],
+                    uid=bundle["uid"],
+                    username=bundle["username"],
+                    email=bundle["email"],
                     platform=platform,
                 ).save()
-                if get_platform == 1:
-                    uid = UserInfo.objects.get(
-                        uid=package["uid"]
-                    )
-                    UserAuth(
-                        uid=uid,
-                        username=package["username"],
-                        email=package["email"],
-                        password=package["password"],
-                    ).save()
-                token = generate_jwt(package)
-                return handcraft_res(201, {"success": "{} has been created!".format(package["username"]), "token": "{}".format(token)})
-            except Exception as error:
-                return handcraft_res(400, error)
-        else:
-            auth.delete_user(bundle["uid"])
-            return handcraft_res(401, "Invalid csrf token!")
+                uid = UserInfo.objects.get(
+                    uid=bundle["uid"]
+                )
+                UserAuth(
+                    uid=uid,
+                    username=bundle["username"],
+                    email=bundle["email"],
+                    password=bundle["password"],
+                ).save()
+                token = generate_jwt(bundle)
+                return handcraft_res(201, str(token))
+            else:
+                auth.delete_user(bundle["uid"])
+                return handcraft_res(401, "Invalid csrf token!")
+        except Exception as error:
+            return handcraft_res(401, "Error requesting to Firebase.")
 
                
 class SBN_User_API_POST_Login(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def post(self, request, *args, **kwargs):
-        if verify_pseudo_csrf(request.data["csrf"]) == True:
+        try:
             de_bundle = auth.verify_id_token(request.data["sbnSessionId"])
             bundle = {}
             bundle["uid"] = de_bundle["uid"]
             bundle["email"] = de_bundle["email"]
             bundle["password"] = request.data["password"]
             bundle["exp"] = de_bundle["exp"]
-            try: 
+            if verify_pseudo_csrf(request.data["csrf"]) == True:
                 if UserInfo.objects.filter(uid=bundle["uid"]).exists() and UserAuth.objects.filter(password=bundle["password"]).exists():
                     token = generate_jwt(bundle)
-                    username = UserInfo.objects.get(email=bundle["email"]).username
-                    return handcraft_res(202, { "success": "Welcome back {}".format(username), "token": "{}".format(token) })
-            except Exception as error:
-                return handcraft_res(401, error)
-        else:
-            return handcraft_res(401, "Invalid csrf token!")
+                    return handcraft_res(202, token)
+                return handcraft_res(404, "User not found.")
+            else:
+                return handcraft_res(401, "Invalid csrf token.")
+        except Exception as error:
+            return handcraft_res(401, "Login failed due to firebase token.")
 
+
+class SBN_User_API_POST_Credential_3rd_Party(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def post(self, request, *args, **kwargs):
+        try:
+            de_bundle = auth.verify_id_token(request.data["sbnSessionId"])
+            bundle = {}
+            bundle["uid"] = de_bundle["uid"]
+            bundle["email"] = de_bundle["email"]
+            bundle["username"] = de_bundle["name"]
+            bundle["platform"] = de_bundle["firebase"]["sign_in_provider"]
+            bundle["exp"] = de_bundle["exp"]  
+            if verify_pseudo_csrf(request.data["csrf"]) == True:
+                if UserInfo.objects.filter(uid=bundle["uid"]).exists():
+                    token = generate_jwt(bundle)
+                    return handcraft_res(202, str(token))
+                else:
+                    pk_platform = 2 if bundle["platform"] == "google.com" else 3
+                    platform = UserPlatform.objects.get(pk=pk_platform)
+                    UserInfo(
+                        uid=bundle["uid"],
+                        email=bundle["email"],
+                        username=bundle["username"],
+                        platform=platform
+                    ).save()
+                    token = generate_jwt(bundle)
+                    return handcraft_res(202, str(token))
+            else:
+                if UserInfo.objects.filter(uid=bundle["uid"]).exists():
+                    return handcraft_res(401, "Invalid csrf token.")
+                else:
+                    auth.delete_user(bundle["uid"])
+                    return handcraft_res(401, "Invalid csrf token.")
+        except Exception as error:
+            return handcraft_res(401, "Error requesting to firebase")
+            
 
 class SBN_User_API_POST_Register_Update_User(APIView):
     def post(self, request, *args, **kwargs):
@@ -140,7 +165,8 @@ class SBN_User_API_POST_Forgot(APIView):
                     credential = UserInfo.objects.get(email=request.data["email"]).platform
                     if str(credential) == "password":
                         token = generate_pseudo_email_verification_reset()
-                        send_mail('Reset email', 'http://localhost:3000/verify/{}'.format(token), 'quangkhatran1508@outlook.com.vn', ['apolloquang@gmail.com'], fail_silently=False)
+                        print("Go here")
+                        send_mail('Reset email', 'Click here: http://localhost:3000/verify/{}'.format(token), 'quangkhatran1508@outlook.com.vn', ['apolloquang@gmail.com'], fail_silently=False)
                         return handcraft_res(201, "Email has been sent to check verification.")
                     else:
                         return handcraft_res(202, "Invalid credential.")
@@ -151,12 +177,9 @@ class SBN_User_API_POST_Forgot(APIView):
 class SBN_User_API_POST_Verification(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def post(self, request, *args, **kwargs):
-        if verify_pseudo_csrf(request.data["csrf"]) == True:
-            print(request.data["code"])
-            # verify_pseudo_email_verification(request.data["code"])
-            return handcraft_res(201, "Received.") 
-        else:
-            return handcraft_res(401, "Invalid csrf token.")
+        print(request.data["code"])
+        # verify_pseudo_email_verification(request.data["code"])
+        return handcraft_res(201, "Accepted.")
 
 # Ideal: The next ideal about delete api.
 # - When the user click on delete account button.
