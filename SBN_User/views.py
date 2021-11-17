@@ -16,7 +16,6 @@ from firebase_admin import auth, credentials, initialize_app
 # Import modules from other app.
 from SBN_Auth.plugins.auth_plugins import generate_jwt, generate_pseudo_email_verification_reset, verify_jwt, verify_pseudo_csrf, verify_pseudo_email_verification
 
-Get the file path.
 root_dir = os.path.dirname(__file__)
 app_dir = os.path.join(root_dir, "Firebase")
 key_file = os.path.join(app_dir, "firebase-key.json")
