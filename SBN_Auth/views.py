@@ -57,6 +57,7 @@ class SBN_Auth_API_POST_Reset_Verification(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def get(self, request, *args, **kwargs):
         print(request.headers)
+        # This 
         """
         code, password = verify_pseudo_email_verification(request.data["code"])
         if code == 403:
