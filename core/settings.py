@@ -169,9 +169,7 @@ SESSION_COOKIE_SECURE = True
 #    "saigon-by-night.vercel.app",
 #    "https://saigon-by-night.vercel.app"
 #]
-
 CORS_ALLOW_METHODS = [
-    "DELETE",
     "GET",
     "POST",
 ]

@@ -1,7 +1,6 @@
-# Import JWT module.
 import jwt
-# Import time.
 import time
+from uuid import uuid4
 # Import modules from other app.
 from SBN_User.plugins.response_plugin import handcraft_res
 from SBN_User.models import UserAuth
@@ -46,9 +45,9 @@ def verify_pseudo_csrf(key):
     except Exception as error:
         return handcraft_res(401, error)
 
-def generate_pseudo_email_verification_reset():
-    current_now = int(time.time())
-    jwt_token = "{}".format(jwt.encode({"exp": current_now, "type": "reset"}, secret_key, algorithm="HS256"))
+def generate_pseudo_email_verification_reset(isChecked):
+    current_now = int(time.time()) + 3600
+    jwt_token = "{}".format(jwt.encode({"exp": current_now, "get_password": isChecked}, secret_key, algorithm="HS256"))
     return jwt_token
 
 def verify_pseudo_email_verification(key):
@@ -56,10 +55,9 @@ def verify_pseudo_email_verification(key):
         decoded_key = jwt.decode(key, secret_key, algorithms="HS256")
         current_now = int(time.time())
         if current_now < int(decoded_key["exp"]):
-            if decoded_key["type"] == "reset":
-                return handcraft_res(201, "reset passed.")
-            if decoded_key["type"] == "verification":
-                return handcraft_res(201, "verification.") 
-        return handcraft_res(403, "Token has expired {} > {}".format(current_now, decoded_key["exp"]))
+            if decoded_key["get_password"] == True:
+                return 202, uuid4().hex
+            return 202
+        return 403
     except Exception as error:
         return handcraft_res(401, error)
