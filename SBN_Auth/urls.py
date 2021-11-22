@@ -1,7 +1,7 @@
 # Import Django built-in.
 from django.urls import path
 # Import SBN_Auth Views.
-from .views import SBN_Auth_API_GET_CSRF_Token, SBN_Auth_API_POST_Reset, SBN_Auth_API_POST_Reset_Verification
+from .views import SBN_Auth_API_GET_CSRF_Token, SBN_Auth_API_POST_Reset, SBN_Auth_API_GET_Reset_Verification, SBN_Auth_API_POST_Submit_Reset
 
 urlpatterns = [
     path(
@@ -10,13 +10,18 @@ urlpatterns = [
         name="SBN_Auth_API_GET_CSRF_Token."
     ),
     path(
-        "api/post/reset/",
+        "api/post/request/reset/",
         SBN_Auth_API_POST_Reset.as_view(),
         name="SBN_Auth_API_POST_Reset."
     ),
     path(
-        "api/post/reset/verification/",
-        SBN_Auth_API_POST_Reset_Verification.as_view(),
+        "api/get/verify/reset/",
+        SBN_Auth_API_GET_Reset_Verification.as_view(),
         name="SBN_Auth_API_POST_Reset_Verification."
+    ),
+    path(
+        'api/post/submit/reset/',
+        SBN_Auth_API_POST_Submit_Reset.as_view(),
+        name='Reset password handle.'
     )
 ]

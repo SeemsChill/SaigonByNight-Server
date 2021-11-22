@@ -33,7 +33,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = 'django-insecure-9dcc8qm&blgh50xs=nc9)&!-q!$-e6qnrsm6vjburxz97)kq6l'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False 
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 # Application definition
@@ -142,8 +142,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "mediafiles")
 STATIC_URL = 'static/'
 
 # setting SMTP configuration.
-EMAIL_HOST = env("EMAIL_HOST") 
-EMAIL_HOST_USER = env("EMAIL_HOST_USER") 
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = env("EMAIL_USE_TLS")

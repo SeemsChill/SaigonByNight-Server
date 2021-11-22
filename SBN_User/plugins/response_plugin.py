@@ -107,7 +107,10 @@ def handle_mes(status_code, dicts):
             return Response({"message": mess}, status=successful_dict[status_code])
 
     if status_code in error_dict:
-        return Response({"error": handle_err(str(dicts))}, status=error_dict[status_code])
+        if str(type(dicts)) == "<class 'dict'>":
+            return Response(data=dicts, status=error_dict[status_code])
+        else:
+            return Response({"error": handle_err(str(dicts))}, status=error_dict[status_code])
     if status_code in server_error_dict:
         return Response({"message": server_error_mess_dict[status_code]}, status=server_error_dict[status_code])
 

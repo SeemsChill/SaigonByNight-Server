@@ -4,18 +4,17 @@ import environ
 # Import built-in django.
 from django.core.mail import send_mail
 # Import models.
-from SBN_User.models import UserInfo
+from SBN_User.models import UserInfo, UserAuth
 # Import AUTh modules.
-from django.http import response
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 # Import REST framework.
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.views import APIView
 from rest_framework.response import Response
 # Import plugins.
 from SBN_User.plugins.response_plugin import handcraft_res
-from .plugins.auth_plugins import generate_pseudo_csrf, verify_pseudo_csrf, generate_pseudo_email_verification_reset, verify_pseudo_email_verification
+from .plugins.auth_plugins import generate_pseudo_csrf, verify_pseudo_csrf, generate_pseudo_email_verification_reset, verify_pseudo_email_verification, verify_email_after_verification
+# Import firebase.
+from firebase_admin import auth
 
 # Config the .env
 env = environ.Env(DEBUG=(bool, False))
@@ -32,7 +31,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 class SBN_Auth_API_GET_CSRF_Token(APIView):
     def get(self, request, format=None):
         response = Response({"message": "retrieved token successfully!"})
-        response["X-CSRFToken"] = generate_pseudo_csrf() 
+        response["X-CSRFToken"] = generate_pseudo_csrf()
         return response
 
 
@@ -43,7 +42,8 @@ class SBN_Auth_API_POST_Reset(APIView):
             if UserInfo.objects.filter(email=request.data["email"]).exists():
                     credential = UserInfo.objects.get(email=request.data["email"]).platform
                     if str(credential) == "password":
-                        token = generate_pseudo_email_verification_reset(request.data["isChecked"])
+                        UserAuth.objects.filter(email=request.data["email"]).update(is_reset=False)
+                        token = generate_pseudo_email_verification_reset(request.data)
                         send_mail('Reset email', 'Click here: {}/verify/reset/{}'.format(env("CLIENT_SERVER_HOST"), token), 'quangkhatran1508@outlook.com.vn', [request.data["email"]], fail_silently=False)
                         return handcraft_res(201, { "email": "Email has been sent to check verification."})
                     else:
@@ -53,19 +53,38 @@ class SBN_Auth_API_POST_Reset(APIView):
             return handcraft_res(401, "Invalid csrf token.")
 
 
-class SBN_Auth_API_POST_Reset_Verification(APIView):
-    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+class SBN_Auth_API_GET_Reset_Verification(APIView):
     def get(self, request, *args, **kwargs):
-        print(request.headers)
-        # This 
-        """
-        code, password = verify_pseudo_email_verification(request.data["code"])
-        if code == 403:
-            return handcraft_res(403, "Token has expired.")
+        code, password = verify_pseudo_email_verification(request.headers["Authorization"])
+        if code == 401:
+            return handcraft_res(401, { 'status': 'reject', 'code': 401, 'message': 'Invalid jwt token.'})
+        if code == 406:
+            return handcraft_res(406, { "status": "reject", "code": 406, "message": "Already verified." })
+        if code == 410:
+            return handcraft_res(410, { "status": "reject", "code": 410, "message": "Token has expired." })
         if code == 202:
             if password:
-                return handcraft_res(202, { "password": password })
+                return handcraft_res(202, { "status": "accept", "password": password })
             else:
-                return handcraft_res(202, "Reset password verified.")
-        """
-        return handcraft_res(202, "Accepted")
+                return handcraft_res(202, { "status": "accept" })
+
+
+class SBN_Auth_API_POST_Submit_Reset(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def post(self, request, *args, **kwargs):
+        if verify_pseudo_csrf(request.data['csrf']) == True:
+            code, email = verify_email_after_verification(request.headers['Authorization'])
+            if code == 401:
+                return handcraft_res(401, { 'message': 'Invalid jwt token.' })
+            elif code == 410:
+                return handcraft_res(410, { 'message': 'Already reset password.' })
+            else:
+                obj = UserInfo.objects.get(email=email).uid
+                auth.update_user(
+                    obj,
+                    password=request.data['password']
+                )
+                UserAuth.objects.filter(email=email).update(password=request.data['password'])
+                return handcraft_res(202, { 'message': 'Update password successfully.', 'name': '{}'.format(UserInfo.objects.get(email=email).username)})
+        else:
+            return handcraft_res(401, 'Invalid csrf token.')

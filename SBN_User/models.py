@@ -231,6 +231,13 @@ class UserAuth(models.Model):  # User's Auth Table.
         verbose_name="user_updated?",
         help_text="Account has been updated?"
     )
+    is_reset = models.BooleanField(
+        # Attributes.
+        default=False,
+        # Details.
+        verbose_name="has_reset_password?",
+        help_text="Password has been reset?"
+    )
 
     class Meta:
         verbose_name = "user_auth."

@@ -1,6 +1,9 @@
 import jwt
 import time
 from uuid import uuid4
+# For generating secure password.
+import secrets
+import string
 # Import modules from other app.
 from SBN_User.plugins.response_plugin import handcraft_res
 from SBN_User.models import UserAuth
@@ -40,24 +43,42 @@ def verify_pseudo_csrf(key):
     try:
         decoded_key = jwt.decode(key, csrf_key, algorithms="HS256")
         if decoded_key["flag"] == "khadeptraithanhlichvodichkhapvutru":
-            return True 
-        return False 
+            return True
+        return False
     except Exception as error:
         return handcraft_res(401, error)
 
-def generate_pseudo_email_verification_reset(isChecked):
+def generate_pseudo_email_verification_reset(data):
     current_now = int(time.time()) + 3600
-    jwt_token = "{}".format(jwt.encode({"exp": current_now, "get_password": isChecked}, secret_key, algorithm="HS256"))
+    jwt_token = "{}".format(jwt.encode({"exp": current_now, "email": data["email"], "get_password": data["isChecked"]}, secret_key, algorithm="HS256"))
     return jwt_token
 
 def verify_pseudo_email_verification(key):
     try:
         decoded_key = jwt.decode(key, secret_key, algorithms="HS256")
+        if UserAuth.objects.get(email=decoded_key["email"]).is_reset == True:
+            return 410, ''
         current_now = int(time.time())
         if current_now < int(decoded_key["exp"]):
             if decoded_key["get_password"] == True:
-                return 202, uuid4().hex
-            return 202
-        return 403
+                alphabet = string.ascii_letters + string.digits
+                password = ''.join(secrets.choice(alphabet) for i in range(20))
+                return 202, password
+            return 202, ""
+        return 410, ""
     except Exception as error:
-        return handcraft_res(401, error)
+        if str(error) == 'Signature has expired':
+            return 410, ''
+        else:
+            return 401, ''
+
+def verify_email_after_verification(key):
+    try:
+        decoded_key = jwt.decode(key, secret_key, algorithms='HS256')
+        if UserAuth.objects.get(email=decoded_key['email']).is_reset == True:
+            return 410, ''
+        else:
+            UserAuth.objects.filter(email=decoded_key['email']).update(is_reset=True)
+            return 202, '{}'.format(decoded_key['email'])
+    except Exception as error:
+        return 401, ''

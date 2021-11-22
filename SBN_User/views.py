@@ -164,7 +164,6 @@ class SBN_User_API_POST_Register_Update_User(APIView):
                     )
 
 
-
 # Ideal: The next ideal about delete api.
 # - When the user click on delete account button.
 # the browser shows a form which request the user
