@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 # Import plugins.
 from SBN_User.plugins.response_plugin import handcraft_res
-from .plugins.auth_plugins import generate_pseudo_csrf, verify_pseudo_csrf, generate_pseudo_email_verification_reset, verify_pseudo_email_verification, verify_email_after_verification
+from .plugins.auth_plugins import generate_pseudo_csrf, verify_pseudo_csrf, generate_pseudo_email_verification_reset, verify_pseudo_email_verification_register, verify_pseudo_email_verification, verify_email_after_verification
 # Import firebase.
 from firebase_admin import auth
 
@@ -51,6 +51,19 @@ class SBN_Auth_API_POST_Reset(APIView):
             return handcraft_res(404, "User not found!")
         else:
             return handcraft_res(401, "Invalid csrf token.")
+
+
+class SBN_Auth_API_GET_Register_Verification(APIView):
+    def get(self, request, *args, **kwargs):
+        code = verify_pseudo_email_verification_register(request.headers['Authorization'])
+        if code == 401:
+            return handcraft_res(401, { 'status': 'reject', 'code': 401, 'message': 'Invalid jwt token.' })
+        if code == 410:
+            return handcraft_res(410, { 'status': 'reject', 'code': 410, 'message': 'Token has expired' })
+        if code == 404:
+            return handcraft_res(404, { 'status': 'reject', 'code': 404, 'message': 'User not found.' })
+        if code == 202:
+            return handcraft_res(202, { 'status': 'accept' })
 
 
 class SBN_Auth_API_GET_Reset_Verification(APIView):

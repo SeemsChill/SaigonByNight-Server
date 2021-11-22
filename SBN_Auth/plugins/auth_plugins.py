@@ -6,10 +6,13 @@ import secrets
 import string
 # Import modules from other app.
 from SBN_User.plugins.response_plugin import handcraft_res
-from SBN_User.models import UserAuth
+from SBN_User.models import UserAuth, UserInfo
+# Import Firebase admin.
+from firebase_admin import auth
 
-secret_key = "Saigon_By_Night"
+email_verification_key = 'GrhQ6LZnpOa0B2QQOuxOkmW8pYT299A3'
 csrf_key = "Saigon_By_Night_CSRF"
+secret_key = "Saigon_By_Night"
 
 def generate_jwt(data):
     jwt_token = "Bearer {}".format(jwt.encode(
@@ -48,10 +51,39 @@ def verify_pseudo_csrf(key):
     except Exception as error:
         return handcraft_res(401, error)
 
+def generate_pseudo_email_verification_register(data):
+    current_now = int(time.time()) + 3600
+    jwt_token = '{}'.format(jwt.encode({'exp': current_now, 'email': data['email']}, email_verification_key, algorithm='HS256'))
+    return jwt_token
+
+def verify_pseudo_email_verification_register(key):
+    try:
+        decoded_key = jwt.decode(key, email_verification_key, algorithms='HS256')
+        print(UserAuth.objects.get(email=decoded_key['email']).is_verified)
+        if UserAuth.objects.get(email=decoded_key['email']).is_verified == True:
+            return 410
+        current_now = int(time.time())
+        if current_now < int(decoded_key['exp']):
+            obj = UserInfo.objects.get(email=decoded_key['email']).uid
+            auth.update_user(
+                obj,
+                email_verified=True
+            )
+            UserAuth.objects.filter(email=decoded_key['email']).update(is_verified=True)
+            return 202
+        return 410
+    except Exception as error:
+        if str(error) == 'Signature has expired':
+            return 410
+        else:
+            return 401
+
+
 def generate_pseudo_email_verification_reset(data):
     current_now = int(time.time()) + 3600
     jwt_token = "{}".format(jwt.encode({"exp": current_now, "email": data["email"], "get_password": data["isChecked"]}, secret_key, algorithm="HS256"))
     return jwt_token
+
 
 def verify_pseudo_email_verification(key):
     try:
