@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'SBN_User.apps.SbnUserConfig',
     'SBN_Auth.apps.SbnAuthConfig',
+    'SBN_Product.apps.SbnProductConfig',
     'rest_framework',
     'corsheaders',
     'phonenumber_field'

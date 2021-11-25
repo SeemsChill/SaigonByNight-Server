@@ -23,9 +23,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('SBN_Auth.urls'), name='SBN_Auth'),
-    path('', include('SBN_User.urls'), name='SBN_User')
+    path('', include('SBN_User.urls'), name='SBN_User'),
+    path('', include('SBN_Product.urls'), name='SBN_Product')
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL,
-                          document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

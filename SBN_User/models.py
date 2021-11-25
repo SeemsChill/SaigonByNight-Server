@@ -113,8 +113,7 @@ class UserInfo(models.Model):  # User's Information Table.
         verbose_name="full_name.",
         help_text="Following format: char(1 -> 40).",
     )
-    # District || City.
-    first_dest = models.CharField(
+    province = models.CharField(
         # Attributes.
         max_length=40,
         # Details.
@@ -122,16 +121,14 @@ class UserInfo(models.Model):  # User's Information Table.
         help_text="Following format: char(1 -> 40).",
 
     )
-    # Streets || Area.
-    second_dest = models.CharField(
+    district = models.CharField(
         # Attributes.
         max_length=40,
         # Details.
         verbose_name="second_destination.",
         help_text="Following format: char(1 -> 40).",
     )
-    # Khu:
-    third_dest = models.CharField(
+    ward = models.CharField(
         # Attributes.
         max_length=40,
         # Details.
@@ -223,13 +220,6 @@ class UserAuth(models.Model):  # User's Auth Table.
         # Details.
         verbose_name="user_verified?",
         help_text="Account has been verified?"
-    )
-    is_updated = models.BooleanField(
-        # Attributes.
-        default=False,
-        # Details.
-        verbose_name="user_updated?",
-        help_text="Account has been updated?"
     )
     is_reset = models.BooleanField(
         # Attributes.

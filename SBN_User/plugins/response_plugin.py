@@ -103,8 +103,7 @@ def handle_mes(status_code, dicts):
         elif str(type(dicts)) == "<class 'rest_framework.utils.serializer_helpers.ReturnList'>":
             return Response(data=dicts, status=successful_dict[status_code])
         else:
-            mess = '{} {}'.format(dicts, message_dict[status_code])
-            return Response({"message": mess}, status=successful_dict[status_code])
+            return Response({"message": dicts}, status=successful_dict[status_code])
 
     if status_code in error_dict:
         if str(type(dicts)) == "<class 'dict'>":

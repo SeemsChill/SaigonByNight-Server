@@ -18,7 +18,7 @@ urlpatterns = [
         name="SBN_User_API_POST_Login_Third_Party."
     ),
     path(
-        "api/post/register/update/user/",
+        "api/post/update/user/",
         SBN_User_API_POST_Register_Update_User.as_view(),
         name="SBN_User_API_POST_Register_Update_User."
     ),

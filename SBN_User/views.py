@@ -74,6 +74,7 @@ class SBN_User_API_POST_Register_Create_User(APIView):
                 auth.delete_user(bundle["uid"])
                 return handcraft_res(401, "Invalid csrf token!")
         except Exception as error:
+            print(error)
             emergency_uid = request.data["uid"]
             if UserInfo.objects.filter(uid=emergency_uid).exists():
                 return handcraft_res(401, "Error requesting to Firebase.")
@@ -117,7 +118,7 @@ class SBN_User_API_POST_Credential_3rd_Party(APIView):
             if verify_pseudo_csrf(request.data["csrf"]) == True:
                 if UserInfo.objects.filter(uid=bundle["uid"]).exists():
                     token = generate_jwt(bundle)
-                    return handcraft_res(202, str(token))
+                    return handcraft_res(202, token)
                 else:
                     pk_platform = 2 if bundle["platform"] == "google.com" else 3
                     platform = UserPlatform.objects.get(pk=pk_platform)
@@ -128,7 +129,7 @@ class SBN_User_API_POST_Credential_3rd_Party(APIView):
                         platform=platform
                     ).save()
                     token = generate_jwt(bundle)
-                    return handcraft_res(202, str(token))
+                    return handcraft_res(202, token)
             else:
                 if UserInfo.objects.filter(uid=bundle["uid"]).exists():
                     return handcraft_res(401, "Invalid csrf token.")
@@ -143,35 +144,26 @@ class SBN_User_API_POST_Credential_3rd_Party(APIView):
                 auth.delete_user(emergency_uid)
                 return handcraft_res(400, "Bad request due to decrypting firebase token too soon.")
 
+
 class SBN_User_API_POST_Register_Update_User(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def post(self, request, *args, **kwargs):
-        de_bundle = verify_jwt(request.headers["Authorization"])
-        if UserAuth.objects.filter(uid=de_bundle["uid"]).exists():
-            type = register_package(request.data)
-            if type == False:
-                return handcraft_res(406, "There's something wrong with your request package!")
+        if verify_pseudo_csrf(request.data["csrf"]) == True:
+            return_package = verify_jwt(request.headers['Authorization'])
+            if str(type(return_package)) == "<class 'str'>":
+                UserInfo.objects.filter(uid=return_package).update(
+                    full_name=request.data['realName'],
+                    phone_number=request.data['phoneNumber'],
+                    province=request.data['province'],
+                    district=request.data['district'],
+                    ward=request.data['ward']
+                )
+                return handcraft_res(202, 'Update successfully.')
             else:
-                try:
-                    if UserInfo.objects.filter(uid=de_bundle["uid"]).exists():
-                        UserInfo.objects.filter(uid=de_bundle["uid"]).update(
-                            full_name=request.data["full_name"],
-                            first_dest=request.data["first_dest"],
-                            second_dest=request.data["second_dest"],
-                            third_dest=request.data["third_dest"],
-                            detail_adr=request.data["detail_adr"],
-                            phone_number=request.data["phone_number"],
-                        )
-                    if UserAuth.objects.filter(uid=de_bundle["uid"]).exists():
-                        UserAuth.objects.filter(uid=de_bundle["uid"]).update(is_updated=True)
-                    return handcraft_res(
-                        202,
-                        "Update {}".format(de_bundle["uid"])
-                    )
-                except Exception as error:
-                    return handcraft_res(
-                        401,
-                        error
-                    )
+                return handcraft_res(401, { 'message': 'Invalid or expired jwt' })
+        else:
+            return handcraft_res(401, { 'message': 'Invalid csrftoken' })
+
 
 
 # Ideal: The next ideal about delete api.
