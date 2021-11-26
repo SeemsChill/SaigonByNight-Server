@@ -6,6 +6,7 @@ from .models import UserAuth, UserInfo, UserPlatform
 # Import plugins.
 from .plugins.data_plugins import register_package
 from .plugins.response_plugin import handcraft_res
+from .plugins.user_plugin import get_user_info
 # Import system.
 import os
 import environ
@@ -145,6 +146,19 @@ class SBN_User_API_POST_Credential_3rd_Party(APIView):
                 return handcraft_res(400, "Bad request due to decrypting firebase token too soon.")
 
 
+class GetUserProfile(APIView):
+    def get(self, request):
+        if verify_pseudo_csrf(request.headers['csrftoken']) == True:
+            return_package = verify_jwt(request.headers['Authorization'])
+            if str(type(return_package)) == "<class 'str'>":
+                package = get_user_info(return_package)
+                return handcraft_res(202, package)
+            else:
+                return handcraft_res(401, { 'message': 'Invalid or expired jwt token.'})
+        else:
+            return handcraft_res(401, { 'message': 'Invalid csrftoken.' })
+
+
 class SBN_User_API_POST_Register_Update_User(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def post(self, request, *args, **kwargs):
@@ -154,10 +168,20 @@ class SBN_User_API_POST_Register_Update_User(APIView):
                 UserInfo.objects.filter(uid=return_package).update(
                     full_name=request.data['realName'],
                     phone_number=request.data['phoneNumber'],
-                    province=request.data['province'],
-                    district=request.data['district'],
-                    ward=request.data['ward']
+                    detail_adr=request.data['detailAddress']
                 )
+                if request.data['province']:
+                    UserInfo.objects.filter(uid=return_package).update(
+                        province=request.data['province'],
+                    )
+                if request.data['district']:
+                    UserInfo.objects.filter(uid=return_package).update(
+                        district=request.data['district'],
+                    )
+                if request.data['ward']:
+                    UserInfo.objects.filter(uid=return_package).update(
+                        ward=request.data['ward'],
+                    )
                 return handcraft_res(202, 'Update successfully.')
             else:
                 return handcraft_res(401, { 'message': 'Invalid or expired jwt' })
