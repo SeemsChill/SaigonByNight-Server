@@ -9,7 +9,9 @@ def get_user_info(uid):
     district = UserInfo.objects.get(uid=uid).district
     ward = UserInfo.objects.get(uid=uid).ward
     phone_number = UserInfo.objects.get(uid=uid).phone_number
-    phone_number = str(phone_number).split('+84')
+    if phone_number != '':
+        phone_number = str(phone_number).split('+84')
+        phone_number = phone_number[1]
     detail_address = UserInfo.objects.get(uid=uid).detail_adr
 
     return {
@@ -19,6 +21,6 @@ def get_user_info(uid):
         'province': province,
         'district': district,
         'ward': ward,
-        'phone_number': str(phone_number[1]),
+        'phone_number': str(phone_number),
         'detail_address': detail_address
     }

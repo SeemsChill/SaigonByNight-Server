@@ -10,8 +10,10 @@ def list_all_products(products):
     for product in products:
         prod_uid = Product.objects.get(prod_uid=product).prod_uid
         name = Product.objects.get(prod_uid=product).name
+        description = Product.objects.get(prod_uid=product).description
         quantity = Product.objects.get(prod_uid=product).quantity
         current_quantity = Product.objects.get(prod_uid=product).current_quantity
+        price = Product.objects.get(prod_uid=product).price
         status_percentage = status_calculator(int(current_quantity), int(quantity))
         status_zone = status_detector(status_percentage)
 
@@ -20,5 +22,7 @@ def list_all_products(products):
         dashboard_product[prod_uid]['name'] = name
         dashboard_product[prod_uid]['current_quantity'] = int(current_quantity)
         dashboard_product[prod_uid]['status_zone'] = str(status_zone)
+        dashboard_product[prod_uid]['description'] = str(description)
+        dashboard_product[prod_uid]['price'] = int(price)
 
     return dashboard_product

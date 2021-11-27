@@ -53,6 +53,7 @@ class CreateProduct(APIView):
                     name=request.data['productName'],
                     category=category,
                     image=request.FILES['productImage'],
+                    description=request.data['productDescription'],
                     quantity=int(request.data['productQuantity']),
                     current_quantity=int(request.data['productQuantity']),
                     price=request.data['productPrice'],
@@ -61,5 +62,35 @@ class CreateProduct(APIView):
                 return handcraft_res(202, { 'message': 'message accepted.' })
             else:
                 return handcraft_res(401, { 'message': 'Invalid or expired jwt.' })
+        else:
+            return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })
+
+# update a product.
+class UpdateProduct(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def post(self, request):
+        if verify_pseudo_csrf(request.headers['Authorization']):
+            return_package = decrypt_authorization_jwt(request.headers['Authorization'])
+            if (str(type(return_package))) == "<class 'str'>":
+                Product.objects.filter(prod_uid=request.data['productUid']).update(
+                    name=request.data['productName'],
+                    description=request.data['productDescription'],
+                    quantity=request.data['productQuantity'],
+                    current_quantity=request.data['productQuantity'],
+                    price=request.data['productPrice']
+                )
+                return handcraft_res(202, { 'message': 'updated the package.' })
+        else:
+            return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })
+
+# delete a product.
+class DeleteProduct(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def post(self, request):
+        if verify_pseudo_csrf(request.headers['csrftoken']):
+            return_package = decrypt_authorization_jwt(request.headers['Authorization'])
+            if (str(type(return_package))) == "<class 'str'>":
+                Product.objects.filter(prod_uid=request.data['productUid']).delete()
+                return handcraft_res(202, { 'message': 'deleted the product.' })
         else:
             return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })
