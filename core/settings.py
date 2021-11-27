@@ -179,5 +179,10 @@ CORS_EXPOSE_HEADERS = [
     "Content-Type",
     "X-CSRFToken"
 ]
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'Authorization',
+    'csrftoken'
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
