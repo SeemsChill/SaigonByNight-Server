@@ -148,3 +148,39 @@ class Product(models.Model):
 
     def __str__(self):
         return str(self.prod_uid)
+
+
+class Bill(models.Model):
+    owner_uid = models.ForeignKey(
+        UserInfo,
+        on_delete=models.CASCADE,
+        verbose_name='owner_uid',
+        help_text='Following format: char(1->38).',
+        related_name='owner_uid'
+    )
+    prod_uid = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        verbose_name='product_uid',
+        help_text='Following format: char(1 -> 32).'
+    )
+    client_uid = models.ForeignKey(
+        UserInfo,
+        on_delete=models.CASCADE,
+        verbose_name='owner_uid',
+        help_text='Following format: char(1->38).',
+        related_name='client_uid'
+    )
+
+    status = models.BooleanField(
+        default=False,
+        verbose_name='product_status',
+        help_text='thanh toan?'
+    )
+
+    class Meta:
+        verbose_name = "bill."
+        verbose_name_plural = 'bills.'
+
+    def __str__(self):
+        return str(self.prod_uid)

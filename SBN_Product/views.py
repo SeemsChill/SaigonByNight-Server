@@ -115,3 +115,16 @@ class ListAllTheProduct(APIView):
         else:
             products = list_product_dashboard(Product.objects.all())
             return handcraft_res(202, products)
+
+
+class BuyTheProduct(APIView):
+    def post(self, request):
+        if verify_pseudo_csrf(request.headers['csrftoken']):
+            return_package = decrypt_authorization_jwt(request.headers['Authorization'])
+            if (str(type(return_package))) == "<class 'str'>":
+                print(request.data)
+                return handcraft_res(202, { 'message': 'we bought your product.' })
+            else:
+                return handcraft_res(401, { 'message': 'Invalid or expired jwt token.' })
+        else:
+            return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })

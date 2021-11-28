@@ -345,6 +345,7 @@ def list_product_algorithm(provinces):
 
 
                     list_product[prod_uid] = {}
+                    list_product[prod_uid]['owner_uid'] = str(owner_uid)
                     list_product[prod_uid]['prod_uid'] = prod_uid
                     list_product[prod_uid]['prod_name'] = name
                     list_product[prod_uid]['prod_description'] = description
