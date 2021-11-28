@@ -113,7 +113,11 @@ class SBN_User_API_POST_Credential_3rd_Party(APIView):
             bundle = {}
             bundle["uid"] = de_bundle["uid"]
             bundle["email"] = de_bundle["email"]
-            bundle["username"] = de_bundle["name"]
+            bundle['username'] = ''
+            if 'name' in de_bundle:
+                bundle["username"] = de_bundle["name"]
+            else:
+                bundle['username'] = 'Anonymous'
             bundle["platform"] = de_bundle["firebase"]["sign_in_provider"]
             bundle["exp"] = de_bundle["exp"]
             if verify_pseudo_csrf(request.data["csrf"]) == True:
@@ -138,6 +142,7 @@ class SBN_User_API_POST_Credential_3rd_Party(APIView):
                     auth.delete_user(bundle["uid"])
                     return handcraft_res(401, "Invalid csrf token.")
         except Exception as error:
+            print(error)
             emergency_uid = request.data["uid"]
             if UserInfo.objects.filter(uid=emergency_uid).exists():
                 return handcraft_res(401, "Error requesting to firebase")

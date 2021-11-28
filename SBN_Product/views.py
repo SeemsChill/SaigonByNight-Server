@@ -10,7 +10,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from .models import Category, Product
 from SBN_User.models import UserInfo
 # plugins.
-from .plugins.product_plug import list_all_products
+from .plugins.product_plug import list_all_products, list_product_dashboard, algorithm_location_near_you
 from SBN_User.plugins.response_plugin import handcraft_res
 from SBN_Auth.plugins.product_plugins import decrypt_authorization_jwt
 from SBN_Auth.plugins.auth_plugins import verify_pseudo_csrf
@@ -94,3 +94,24 @@ class DeleteProduct(APIView):
                 return handcraft_res(202, { 'message': 'deleted the product.' })
         else:
             return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })
+
+
+# get all the product.
+class ListAllTheProduct(APIView):
+    def get(self, request):
+        if 'Authorization' in request.headers:
+            return_package = decrypt_authorization_jwt(request.headers['Authorization'])
+            if(str(type(return_package))) == "<class 'str'>":
+                if (UserInfo.objects.get(uid=return_package).province):
+                    province = UserInfo.objects.get(uid=return_package).province
+                    products = algorithm_location_near_you(return_package, province)
+                    return handcraft_res(202, products)
+                else:
+                    products = list_product_dashboard(Product.objects.all())
+                    return handcraft_res(202, products)
+            else:
+                return handcraft_res(401, { 'message': 'Invalid or expired jwt token.' })
+            return handcraft_res(202, { 'message': 'get all product near you.' })
+        else:
+            products = list_product_dashboard(Product.objects.all())
+            return handcraft_res(202, products)

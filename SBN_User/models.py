@@ -119,7 +119,6 @@ class UserInfo(models.Model):  # User's Information Table.
         # Details.
         verbose_name="first_destination.",
         help_text="Following format: char(1 -> 40).",
-
     )
     district = models.CharField(
         # Attributes.
