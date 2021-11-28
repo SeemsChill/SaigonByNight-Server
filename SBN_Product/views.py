@@ -7,10 +7,10 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 # models.
-from .models import Category, Product
+from .models import Category, Product, Bill
 from SBN_User.models import UserInfo
 # plugins.
-from .plugins.product_plug import list_all_products, list_product_dashboard, algorithm_location_near_you
+from .plugins.product_plug import list_all_products, list_product_dashboard, algorithm_location_near_you, return_bills_client, return_bills_owner
 from SBN_User.plugins.response_plugin import handcraft_res
 from SBN_Auth.plugins.product_plugins import decrypt_authorization_jwt
 from SBN_Auth.plugins.auth_plugins import verify_pseudo_csrf
@@ -118,12 +118,54 @@ class ListAllTheProduct(APIView):
 
 
 class BuyTheProduct(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def post(self, request):
         if verify_pseudo_csrf(request.headers['csrftoken']):
             return_package = decrypt_authorization_jwt(request.headers['Authorization'])
             if (str(type(return_package))) == "<class 'str'>":
-                print(request.data)
+                owner_uid=UserInfo.objects.get(uid=request.data['ownerUid'])
+                client_uid=UserInfo.objects.get(uid=request.data['clientUid'])
+                product_uid=Product.objects.get(prod_uid=request.data['productUid'])
+                bill_uid=uuid4().hex
+                Bill(
+                    bill_uid=bill_uid,
+                    owner_uid=owner_uid,
+                    client_uid=client_uid,
+                    prod_uid=product_uid,
+                    quantity=request.data['quantity'],
+                ).save()
                 return handcraft_res(202, { 'message': 'we bought your product.' })
+            else:
+                return handcraft_res(401, { 'message': 'Invalid or expired jwt token.' })
+        else:
+            return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })
+
+class GetAllBillsForClient(APIView):
+    def get(self, request):
+        if verify_pseudo_csrf(request.headers['csrftoken']):
+            return_package = decrypt_authorization_jwt(request.headers['Authorization'])
+            if(str(type(return_package))) == "<class 'str'>":
+                if Bill.objects.filter(client_uid=return_package).exists():
+                    bills = Bill.objects.filter(client_uid=return_package)
+                    list_bills = return_bills_client(bills)
+                    return handcraft_res(202, list_bills)
+                return handcraft_res(202, { 'message': 'nothing' })
+            else:
+                return handcraft_res(401, { 'message': 'Invalid or expired jwt token.' })
+        else:
+            return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })
+
+
+class GetAllBillsForOwner(APIView):
+    def get(self, request):
+        if verify_pseudo_csrf(request.headers['csrftoken']):
+            return_package = decrypt_authorization_jwt(request.headers['Authorization'])
+            if(str(type(return_package))) == "<class 'str'>":
+                if Bill.objects.filter(owner_uid=return_package).exists():
+                    bills = Bill.objects.filter(owner_uid=return_package)
+                    list_bill = return_bills_owner(bills)
+                    return handcraft_res(202, list_bill)
+                return handcraft_res(202, { 'message': 'nothing'})
             else:
                 return handcraft_res(401, { 'message': 'Invalid or expired jwt token.' })
         else:

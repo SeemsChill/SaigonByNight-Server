@@ -1,5 +1,5 @@
 # models.
-from ..models import Product
+from ..models import Product, Bill
 from SBN_User.models import UserInfo
 # plugins.
 from .status_plug import status_calculator, status_detector
@@ -396,3 +396,63 @@ def algorithm_location_near_you(uid, province):
     list_product = list_product_algorithm(province_list_complete)
 
     return list_product
+
+
+
+# return all the bills.
+def return_bills_client(bills):
+    list_bills = {}
+
+    for bill in bills:
+        owner_uid = Bill.objects.get(bill_uid=bill).owner_uid
+        client_uid = Bill.objects.get(bill_uid=bill).client_uid
+        quantity = Bill.objects.get(bill_uid=bill).quantity
+        prod_uid = Bill.objects.get(bill_uid=bill).prod_uid
+        status = Bill.objects.get(bill_uid=bill).status
+
+        # get owner name.
+        owner_name = UserInfo.objects.get(uid=owner_uid).username
+        # get product name.
+        product_name = Product.objects.get(prod_uid=prod_uid).name
+
+        list_bills[str(bill)] = {}
+        list_bills[str(bill)]['owner_name'] = str(owner_name)
+        list_bills[str(bill)]['prod_name'] = str(product_name)
+        list_bills[str(bill)]['status'] = str(status)
+        list_bills[str(bill)]['quantity'] = int(quantity)
+
+    return list_bills
+
+def return_bills_owner(bills):
+    list_bills = {}
+
+    for bill in bills:
+        owner_uid = Bill.objects.get(bill_uid=bill).owner_uid
+        client_uid = Bill.objects.get(bill_uid=bill).client_uid
+        quantity = Bill.objects.get(bill_uid=bill).quantity
+        prod_uid = Bill.objects.get(bill_uid=bill).prod_uid
+        status = Bill.objects.get(bill_uid=bill).status
+
+        # get client info.
+        client_name = UserInfo.objects.get(uid=client_uid).username
+        province = UserInfo.objects.get(uid=client_uid).province
+        district = UserInfo.objects.get(uid=client_uid).district
+        ward = UserInfo.objects.get(uid=client_uid).ward
+        phone_number = UserInfo.objects.get(uid=client_uid).phone_number
+        # get product name.
+        product_name = Product.objects.get(prod_uid=prod_uid).name
+
+        list_bills[str(bill)] = {}
+        list_bills[str(bill)]['client_name'] = str(client_name)
+        list_bills[str(bill)]['prod_name'] = str(product_name)
+        list_bills[str(bill)]['status'] = str(status)
+        list_bills[str(bill)]['quantity'] = int(quantity)
+        list_bills[str(bill)]['province'] = province
+        list_bills[str(bill)]['district'] = district
+        list_bills[str(bill)]['ward'] = ward
+        list_bills[str(bill)]['phone_number'] = str(phone_number)
+    return list_bills
+
+
+
+

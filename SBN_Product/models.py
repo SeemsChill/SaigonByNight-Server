@@ -151,6 +151,11 @@ class Product(models.Model):
 
 
 class Bill(models.Model):
+    bill_uid = models.CharField(
+        max_length=32,
+        verbose_name='bill_uid',
+        help_text='bill_uid'
+    )
     owner_uid = models.ForeignKey(
         UserInfo,
         on_delete=models.CASCADE,
@@ -171,7 +176,12 @@ class Bill(models.Model):
         help_text='Following format: char(1->38).',
         related_name='client_uid'
     )
-
+    quantity = models.DecimalField(
+        max_digits=30,
+        decimal_places=15,
+        verbose_name='product quantity',
+        help_text='quantity products.'
+    )
     status = models.BooleanField(
         default=False,
         verbose_name='product_status',
@@ -183,4 +193,4 @@ class Bill(models.Model):
         verbose_name_plural = 'bills.'
 
     def __str__(self):
-        return str(self.prod_uid)
+        return str(self.bill_uid)
