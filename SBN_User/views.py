@@ -69,6 +69,7 @@ class SBN_User_API_POST_Register_Create_User(APIView):
                 ).save()
                 token = generate_jwt(bundle)
                 email_token = generate_pseudo_email_verification_register(bundle)
+                print(bundle['email'])
                 send_mail('Email verification', 'Click here: {}/verify/register/{}'.format(env('CLIENT_SERVER_HOST'), email_token), 'quangkhatran1508@outlook.com.vn', [bundle['email']], fail_silently=False)
                 return handcraft_res(201, str(token))
             else:
