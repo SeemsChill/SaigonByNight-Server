@@ -443,6 +443,7 @@ def return_bills_owner(bills):
         product_name = Product.objects.get(prod_uid=prod_uid).name
 
         list_bills[str(bill)] = {}
+        list_bills[str(bill)]['bill_uid'] = str(bill)
         list_bills[str(bill)]['client_name'] = str(client_name)
         list_bills[str(bill)]['prod_name'] = str(product_name)
         list_bills[str(bill)]['status'] = str(status)

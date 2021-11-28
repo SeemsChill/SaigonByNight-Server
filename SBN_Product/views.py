@@ -170,3 +170,28 @@ class GetAllBillsForOwner(APIView):
                 return handcraft_res(401, { 'message': 'Invalid or expired jwt token.' })
         else:
             return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })
+
+
+class BillAction(APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def post(self, request):
+        if verify_pseudo_csrf(request.headers['csrftoken']):
+            return_package = decrypt_authorization_jwt(request.headers['Authorization'])
+            if(str(type(return_package))) == "<class 'str'>":
+                prod_uid = Bill.objects.get(bill_uid=request.data['bill_uid']).prod_uid
+                quantity = Bill.objects.get(bill_uid=request.data['bill_uid']).quantity
+                current_quantity = Product.objects.get(prod_uid=prod_uid).current_quantity
+                quantity_cal = current_quantity - quantity
+                if quantity_cal == 0 or quantity_cal < 0:
+                    Product.objects.filter(prod_uid=prod_uid).delete()
+                    Bill.objects.filter(bill_uid=request.data['bill_uid']).delete()
+                    return handcraft_res(202, { 'message': 'delivered successfully.'})
+                # update the quantity.
+                Product.objects.filter(prod_uid=prod_uid).update(current_quantity=quantity_cal)
+                # delete the product.
+                Bill.objects.filter(bill_uid=request.data['bill_uid']).delete()
+                return handcraft_res(202, { 'message': 'delivered successfully.'})
+            else:
+                return handcraft_res(401, { 'message': 'Invalid or expired jwt token.' })
+        else:
+            return handcraft_res(401, { 'message': 'Invalid or expired csrf token.' })
